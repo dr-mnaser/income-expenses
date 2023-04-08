@@ -100,8 +100,11 @@ def main():
                 submitted = st.form_submit_button("Save Data")
         
                 if submitted:
-                    db.insert_period(str(period), transaction, value, comment)
-                    st.success("Data saved!")
+                    try:
+                        db.insert_period(str(period), transaction, value, comment)
+                        st.success("Data saved!")
+                    except Exception as e:
+                        st.write(f"Error: {e}")
         
         # --- Delete Entry ---
         if selected == "Delete":
@@ -112,8 +115,11 @@ def main():
                 if submitted:
                     # Get data from database
                     if period is not None:
-                        db.delete_period(period)
-                        st.success("Data deleted!")
+                        try:
+                            db.delete_period(period)
+                            st.success("Data deleted!")
+                        except Exception as e:
+                            st.write(f"Error: {e}")
                     
         # --- PLOT PERIODS ---
         if selected == "Visualization":
@@ -129,7 +135,12 @@ def main():
                 
                 "---"
                 
-                periods = db.get_all_periods()
+                try:
+                    periods = db.get_all_periods()
+                except Exception as e:
+                    st.write(f"Error: {e}")
+                    periods = []
+                    
                 
                 submitted = st.form_submit_button("Show Data")
                 
@@ -180,7 +191,12 @@ def main():
             )
             
             if selected == "List":
-                students = db.fetch_all_students()
+                try:
+                    students = db.fetch_all_students()
+                except Exception as e:
+                    st.write(f"Error: {e}")
+                    students = []
+                    
                 if len(students) > 0:
                     payment_dates = []
                     names = []
@@ -217,8 +233,11 @@ def main():
                     if submitted:
                         # Get data from database
                         if name is not None:
-                            db.delete_student(name)
-                            st.success("Student deleted!")    
+                            try:
+                                db.delete_student(name)
+                                st.success("Student deleted!")  
+                            except Exception as e:
+                                st.write(f"Error: {e}")
                 
             if selected == "Add":
                 st.header("Add Student")
@@ -255,8 +274,12 @@ def main():
                     if submitted:
                         if payment == "No":
                             payment_date = ""
-                        db.insert_student(name, level, payment, payment_date, comment)
-                        st.success("Data saved!")
+                            
+                        try:
+                            db.insert_student(name, level, payment, payment_date, comment)
+                            st.success("Data saved!")
+                        except Exception as e:
+                            st.write(f"Error: {e}")
     else:
         st.write("Sorry, the app is currently overloaded. Please try again later.")
     
