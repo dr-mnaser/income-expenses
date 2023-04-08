@@ -110,7 +110,13 @@ def main():
         if selected == "Delete":
             st.header("Delete Entry")
             with st.form("delete_period"):
-                period = st.selectbox("Select Period:", db.get_all_periods())
+                try:
+                    all_periods = db.get_all_periods()
+                except Exception as e:
+                    st.write(f"Error: {e}")
+                    all_periods = []
+                    
+                period = st.selectbox("Select Period:", all_periods)
                 submitted = st.form_submit_button("Delete Entry")
                 if submitted:
                     # Get data from database
