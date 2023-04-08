@@ -33,7 +33,7 @@ if 'start_date' not in st.session_state:
     
 if 'end_date' not in st.session_state:
     st.session_state['end_date'] = today
-    
+       
 # --- HIDE STREAMLIT STYLE ---
 hide_st_style = """
             <style>
@@ -73,6 +73,8 @@ def main():
             icons=["pencil-fill", "trash-fill", "bar-chart-fill", "people-fill"],  # https://icons.getbootstrap.com/
             orientation="horizontal",
         )
+        
+        #fetch_all_periods()
         
         # --- INPUT & SAVE PERIODS ---
         if selected == "Add":
