@@ -105,6 +105,7 @@ def main():
                         st.success("Data saved!")
                     except Exception as e:
                         st.write(f"Error: {e}")
+                        st.write("Please try again!")
         
         # --- Delete Entry ---
         if selected == "Delete":
@@ -114,6 +115,7 @@ def main():
                     all_periods = db.get_all_periods()
                 except Exception as e:
                     st.write(f"Error: {e}")
+                    st.write("Please try again!")
                     all_periods = []
                     
                 period = st.selectbox("Select Period:", all_periods)
@@ -126,6 +128,7 @@ def main():
                             st.success("Data deleted!")
                         except Exception as e:
                             st.write(f"Error: {e}")
+                            st.write("Please try again!")
                     
         # --- PLOT PERIODS ---
         if selected == "Visualization":
@@ -145,6 +148,7 @@ def main():
                     periods = db.get_all_periods()
                 except Exception as e:
                     st.write(f"Error: {e}")
+                    st.write("Please try again!")
                     periods = []
                     
                 
@@ -201,6 +205,7 @@ def main():
                     students = db.fetch_all_students()
                 except Exception as e:
                     st.write(f"Error: {e}")
+                    st.write("Please try again!")
                     students = []
                     
                 if len(students) > 0:
@@ -244,6 +249,7 @@ def main():
                                 st.success("Student deleted!")  
                             except Exception as e:
                                 st.write(f"Error: {e}")
+                                st.write("Please try again!")
                 
             if selected == "Add":
                 st.header("Add Student")
@@ -286,6 +292,7 @@ def main():
                             st.success("Data saved!")
                         except Exception as e:
                             st.write(f"Error: {e}")
+                            st.write("Please try again!")
     else:
         st.write("Sorry, the app is currently overloaded. Please try again later.")
     
