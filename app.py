@@ -90,7 +90,7 @@ def main():
         
         # --- INPUT & SAVE PERIODS ---
         if selected == "Add":
-            st.header(f"Add Entry in {currency}")
+            st.header(f"Add Transaction in {currency}")
             with st.form("entry_form", clear_on_submit=True):
                 # Enter transaction name
                 name = st.text_input("Enter Transaction Name", max_chars=50)
@@ -113,7 +113,7 @@ def main():
                 comment = st.text_area("", placeholder="Enter a comment here ...")    
         
                 "---"
-                submitted = st.form_submit_button("Save Data")
+                submitted = st.form_submit_button("Save Transaction")
         
                 if submitted:
                     if not name:
@@ -122,14 +122,14 @@ def main():
                         try:
                             db.insert_period(name, str(period), transaction, value, comment)
                             st.session_state['transactions_changed'] = True
-                            st.success("Data saved!")
+                            st.success("Transaction saved!")
                         except Exception as e:
                             st.write(f"Error: {e}")
                             st.write("Please try again!")
         
         # --- Delete Entry ---
         if selected == "Delete":
-            st.header("Delete Entry")
+            st.header("Delete Transaction")
             with st.form("delete_period"):
                 if st.session_state['transactions_changed']:
                     try:
@@ -141,22 +141,22 @@ def main():
                 else:
                     all_periods = [item['key'] for item in st.session_state['transactions']]
                     
-                period = st.selectbox("Select Period:", all_periods)
-                submitted = st.form_submit_button("Delete Entry")
+                period = st.selectbox("Select Transaction:", all_periods)
+                submitted = st.form_submit_button("Delete Transaction")
                 if submitted:
                     # Get data from database
                     if period is not None:
                         try:
                             db.delete_period(period)
                             st.session_state['transactions_changed'] = True
-                            st.success("Data deleted!")
+                            st.success("Transaction deleted!")
                         except Exception as e:
                             st.write(f"Error: {e}")
                             st.write("Please try again!")
                     
         # --- PLOT PERIODS ---
         if selected == "Visualization":
-            st.header("Data Visualization")
+            st.header("Transactions Visualization")
             with st.form("saved_periods"):
                 col1, col2 = st.columns(2)
                 with col1:
@@ -168,7 +168,7 @@ def main():
                 
                 "---"
                 
-                submitted = st.form_submit_button("Show Data")
+                submitted = st.form_submit_button("Show Transactions")
                 
                 if submitted:
                     try:
@@ -291,7 +291,7 @@ def main():
                     else:
                         students = [item['key'] for item in st.session_state['students']]
                         
-                    name = st.selectbox("Select Period:", students)
+                    name = st.selectbox("Select Student:", students)
                     submitted = st.form_submit_button("Delete Student")
                     
                     if submitted:
@@ -335,7 +335,7 @@ def main():
                     comment = st.text_area("", placeholder="Enter a comment here ...")    
         
                     "---"
-                    submitted = st.form_submit_button("Save Data")
+                    submitted = st.form_submit_button("Save Student")
                     
                     if submitted:
                         if payment == "No":
@@ -347,7 +347,7 @@ def main():
                             try:
                                 db.insert_student(name, level, payment, payment_date, comment)
                                 st.session_state['students_changed'] = True
-                                st.success("Data saved!")
+                                st.success("Student saved!")
                             except Exception as e:
                                 st.write(f"Error: {e}")
                                 st.write("Please try again!")
