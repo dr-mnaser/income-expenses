@@ -33,6 +33,18 @@ if 'start_date' not in st.session_state:
     
 if 'end_date' not in st.session_state:
     st.session_state['end_date'] = today
+    
+if 'transactions' not in st.session_state:
+    st.session_state['transactions'] = []
+    
+if 'transactions_changed' not in st.session_state:
+    st.session_state['transactions_changed'] = True
+    
+if 'students' not in st.session_state:
+    st.session_state['students'] = []
+    
+if 'students_changed' not in st.session_state:
+    st.session_state['students_changed'] = True
        
 # --- HIDE STREAMLIT STYLE ---
 hide_st_style = """
@@ -71,7 +83,7 @@ def main():
             menu_title=None,
             options=["Add", "Delete", "Visualization", "Students"],
             icons=["pencil-fill", "trash-fill", "bar-chart-fill", "people-fill"],  # https://icons.getbootstrap.com/
-            orientation="horizontal",
+            orientation="horizontal", default_index=2,
         )
         
         #fetch_all_periods()
@@ -80,7 +92,9 @@ def main():
         if selected == "Add":
             st.header(f"Add Entry in {currency}")
             with st.form("entry_form", clear_on_submit=True):
-                
+                # Enter transaction name
+                name = st.text_input("Enter Transaction Name", max_chars=50)
+                "---"
                 # Create date picker with default values
                 period = st.date_input('Date', today)
                 "---"
@@ -102,23 +116,30 @@ def main():
                 submitted = st.form_submit_button("Save Data")
         
                 if submitted:
-                    try:
-                        db.insert_period(str(period), transaction, value, comment)
-                        st.success("Data saved!")
-                    except Exception as e:
-                        st.write(f"Error: {e}")
-                        st.write("Please try again!")
+                    if not name:
+                        st.error("Please enter a non-empty transaction name")
+                    else:
+                        try:
+                            db.insert_period(name, str(period), transaction, value, comment)
+                            st.session_state['transactions_changed'] = True
+                            st.success("Data saved!")
+                        except Exception as e:
+                            st.write(f"Error: {e}")
+                            st.write("Please try again!")
         
         # --- Delete Entry ---
         if selected == "Delete":
             st.header("Delete Entry")
             with st.form("delete_period"):
-                try:
-                    all_periods = db.get_all_periods()
-                except Exception as e:
-                    st.write(f"Error: {e}")
-                    st.write("Please try again!")
-                    all_periods = []
+                if st.session_state['transactions_changed']:
+                    try:
+                        all_periods = db.get_all_periods()
+                    except Exception as e:
+                        st.write(f"Error: {e}")
+                        st.write("Please try again!")
+                        all_periods = []
+                else:
+                    all_periods = [item['key'] for item in st.session_state['transactions']]
                     
                 period = st.selectbox("Select Period:", all_periods)
                 submitted = st.form_submit_button("Delete Entry")
@@ -127,6 +148,7 @@ def main():
                     if period is not None:
                         try:
                             db.delete_period(period)
+                            st.session_state['transactions_changed'] = True
                             st.success("Data deleted!")
                         except Exception as e:
                             st.write(f"Error: {e}")
@@ -146,50 +168,63 @@ def main():
                 
                 "---"
                 
-                try:
-                    periods = db.get_all_periods()
-                except Exception as e:
-                    st.write(f"Error: {e}")
-                    st.write("Please try again!")
-                    periods = []
-                    
-                
                 submitted = st.form_submit_button("Show Data")
                 
                 if submitted:
-                    if len(periods) > 0:
-                        periods_dates = [datetime.datetime.strptime(period, '%Y-%m-%d').date() for period in periods]
-                        periods_dates = [p for p in periods_dates if (p >= start_date) and (p <= end_date)]
-                        periods = [str(p) for p in periods_dates]
-                        
-                        if len(periods) > 0:
+                    try:
+                        if st.session_state['transactions_changed']:
+                            items = db.fetch_all_periods()
+                            st.session_state['transactions'] = items
+                            st.session_state['transactions_changed'] = False
+                        else:
+                            items = st.session_state['transactions']
+                        if len(items) > 0:
+                            names = [item["key"] for item in items]
+                            dates = [item["date"] for item in items]
+                            transactions = [item["transaction"] for item in items]
+                            values = [item["value"] for item in items]
+                            comments = [item["comment"] for item in items]
+                        else:
                             dates = []
-                            transactions = []
-                            values = []
-                            comments = []
-                            for period in periods:
-                                period_data = db.get_period(period)
-                                dates.append(period)
-                                transactions.append(period_data.get("transaction"))
-                                values.append(period_data.get("value"))
-                                comments.append(period_data.get("comment"))
-                            data = {'Date':periods, 'Transaction':transactions,
-                                    'Value':values, 'Comments':comments}
-                            df = pd.DataFrame.from_dict(data)
+                    except Exception as e:
+                        st.write(f"Error: {e}")
+                        st.write("Please try again!")
+                        dates = []
+                        
+                    if len(dates) > 0:
+                        trans_names = []
+                        trans_dates = []
+                        trans_transactions = []
+                        trans_values = []
+                        trans_comments = []
+                        for n, date_str in enumerate(dates):
+                            date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+                            if (date >= start_date) and (date <= end_date):
+                                trans_names.append(names[n])
+                                trans_dates.append(date_str)
+                                trans_transactions.append(transactions[n])
+                                trans_values.append(values[n])
+                                trans_comments.append(comments[n])
+                        data = {'Name': trans_names,'Date':trans_dates, 'Transaction':trans_transactions,
+                                'Value':trans_values, 'Comments':trans_comments}
+                        df = pd.DataFrame.from_dict(data)
                             
-                            col4, col5, col6 = st.columns(3)
-                            total_income = 0
-                            total_expense = 0
-                            remaining_budget = 0
-                            
-                            total_income = sum(df[df['Transaction']=='Income']['Value'])
-                            total_expense = sum(df[df['Transaction']=='Expense']['Value'])
-                            remaining_budget = total_income - total_expense
-                            col4.metric("Total Income", f"{total_income} {currency}")
-                            col5.metric("Total Expense", f"{total_expense} {currency}")
-                            col6.metric("Remaining Budget", f"{remaining_budget} {currency}")
-                            
-                            st.write(df)
+                        col4, col5, col6 = st.columns(3)
+                        total_income = 0
+                        total_expense = 0
+                        remaining_budget = 0
+                        
+                        total_income = sum(df[df['Transaction']=='Income']['Value'])
+                        total_expense = sum(df[df['Transaction']=='Expense']['Value'])
+                        remaining_budget = total_income - total_expense
+                        col4.metric("Total Income", f"{total_income} {currency}")
+                        col5.metric("Total Expense", f"{total_expense} {currency}")
+                        col6.metric("Remaining Budget", f"{remaining_budget} {currency}")
+                        
+                        st.write(df)
+                    else:
+                        placeholder = st.empty()
+                        placeholder.info("No Transactions available!")
                     
         # --- Show Students List ---
         if selected == "Students":
@@ -203,12 +238,17 @@ def main():
             )
             
             if selected == "List":
-                try:
-                    students = db.fetch_all_students()
-                except Exception as e:
-                    st.write(f"Error: {e}")
-                    st.write("Please try again!")
-                    students = []
+                if st.session_state['students_changed']:
+                    try:
+                        students = db.fetch_all_students()
+                        st.session_state['students'] = students
+                        st.session_state['students_changed'] = False
+                    except Exception as e:
+                        st.write(f"Error: {e}")
+                        st.write("Please try again!")
+                        students = []
+                else:
+                    students = st.session_state['students']
                     
                 if len(students) > 0:
                     payment_dates = []
@@ -241,13 +281,25 @@ def main():
             if selected == "Delete":
                 st.header("Delete Student")
                 with st.form("delete_period"):
-                    name = st.selectbox("Select Period:", db.get_all_students())
+                    if st.session_state['students_changed']:
+                        try:
+                            students = db.get_all_students()
+                        except Exception as e:
+                            st.write(f"Error: {e}")
+                            st.write("Please try again!")
+                            students = []
+                    else:
+                        students = [item['key'] for item in st.session_state['students']]
+                        
+                    name = st.selectbox("Select Period:", students)
                     submitted = st.form_submit_button("Delete Student")
+                    
                     if submitted:
                         # Get data from database
                         if name is not None:
                             try:
                                 db.delete_student(name)
+                                st.session_state['students_changed'] = True
                                 st.success("Student deleted!")  
                             except Exception as e:
                                 st.write(f"Error: {e}")
@@ -289,12 +341,16 @@ def main():
                         if payment == "No":
                             payment_date = ""
                             
-                        try:
-                            db.insert_student(name, level, payment, payment_date, comment)
-                            st.success("Data saved!")
-                        except Exception as e:
-                            st.write(f"Error: {e}")
-                            st.write("Please try again!")
+                        if not name:
+                            st.error("Please enter a non-empty student name")
+                        else:
+                            try:
+                                db.insert_student(name, level, payment, payment_date, comment)
+                                st.session_state['students_changed'] = True
+                                st.success("Data saved!")
+                            except Exception as e:
+                                st.write(f"Error: {e}")
+                                st.write("Please try again!")
     else:
         st.write("Sorry, the app is currently overloaded. Please try again later.")
     
